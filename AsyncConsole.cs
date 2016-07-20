@@ -83,27 +83,33 @@ namespace WordAnalysis
             return folder;
         }
 
+        public void Invoke(Action action)
+        {
+            Invoke(new MethodInvoker(action));
+        }
+
+        public void Async(Action action)
+        {
+            ThreadPool.QueueUserWorkItem(o => action());
+        }
+
         public void Form1_Load(object sender, EventArgs e)
         {
-            ThreadPool.QueueUserWorkItem(
-                o =>
-                    {
-                        Invoke(
-                            new MethodInvoker(
-                                () =>
-                                    {
-                                        Clipboard.SetText(
-                                            SetText(
-                                                EnumerableFS(
-                                                    @"D:\MyConfiguration\lzy13870\Desktop\sent",
-                                                    p => p.EndsWith(".doc") || p.EndsWith(".docx"))
-                                                    .Take(2)
-                                                    .Select(p => Parse(OpenWordXml(p)))
-                                                    .ToList()
-                                                    .JoinStrings(Environment.NewLine)));
-                                    }));
-                        Application.Exit();
-                    });
+            Async(
+                () => Invoke(
+                    () =>
+                        {
+                            Clipboard.SetText(
+                                SetText(
+                                    EnumerableFS(
+                                        @"D:\MyConfiguration\lzy13870\Desktop\sent",
+                                        p => p.EndsWith(".doc") || p.EndsWith(".docx"))
+                                        .Take(2)
+                                        .Select(p => Parse(OpenWordXml(p)))
+                                        .ToList()
+                                        .JoinStrings(Environment.NewLine)));
+                            Application.Exit();
+                        }));
         }
 
         public string SetText(string txt)
