@@ -36,6 +36,14 @@ namespace WordAnalysis
 
     public static class ListExtension
     {
+        public static List<T> IsNull<T>(this List<T> source, IEnumerable<T> @default=null) where T:class 
+        {
+            if (source==null||!source.Any())
+            {
+                return new List<T>(@default);
+            }
+            return source.ToList();
+        }
         public static HashSet<T> HashSet<T>(this List<T> source) where T : class
         {
             return new HashSet<T>(source);
@@ -94,7 +102,7 @@ namespace WordAnalysis
 
         public static string ReplaceRegex(this string source, string pattern = "",string replacement="")
         {
-            source.Matches(pattern).ForEach(m => source = source.Replace(m, replacement));
+            source.Matches(pattern).Where(m=>m.IsNotEmpty()).ToList().ForEach(m => source = source.Replace(m, replacement));
             return source;
         }
         public static List<string> Matches(this string source, string pattern = "")
@@ -145,8 +153,31 @@ namespace WordAnalysis
         }
     }
 
+    public static class FuncExtension
+    {
+        public static TOut Try<TIn, TOut>(this Func<TIn, TOut> source,TIn p) where TOut:class 
+        {
+            Func<TIn, TOut> func = input =>
+                {
+                    try
+                    {
+                        return source(input);
+                    }
+                    catch (Exception)
+                    {
+                        return null;
+                    }
+                };
+            return func(p);
+        }
+    }
     public static class IEnumerableExtension
     {
+        public static T Second<T>(this IEnumerable<T> source)
+        {
+            return source.Skip(1).FirstOrDefault();
+        }
+
         public static string JoinStrings<T>(this IEnumerable<T> source,string separator="")
         {
             return string.Join(separator, source);
