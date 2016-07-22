@@ -9,16 +9,17 @@ using System.Xml;
 using Newtonsoft.Json;
 using Microsoft.Scripting.Utils;
 using System.Xml.Linq;
+using System.Diagnostics;
+
+using Accord.Statistics.Distributions.Fitting;
+using Accord.Statistics.Distributions.Multivariate;
+using Accord.Statistics.Models.Markov;
+using Accord.Statistics.Models.Markov.Learning;
+using Accord.Statistics.Models.Markov.Topology;
+using System.Threading;
 
 namespace WordAnalysis
 {
-    using Accord.Statistics.Distributions.Fitting;
-    using Accord.Statistics.Distributions.Multivariate;
-    using Accord.Statistics.Models.Markov;
-    using Accord.Statistics.Models.Markov.Learning;
-    using Accord.Statistics.Models.Markov.Topology;
-    using System.Threading;
-
     public partial class AsyncConsole : Form
     {
         public AsyncConsole()
@@ -46,7 +47,7 @@ namespace WordAnalysis
                     foreach (string subfolder in folders)
                     {
                         var f = TrimPath(subfolder);
-                        foreach (string ssfolder in this.EnumerableFS(f, @where))
+                        foreach (string ssfolder in EnumerableFS(f, @where))
                         {
                             if (@where != null && @where(ssfolder)) yield return ssfolder;
                         }
@@ -96,25 +97,23 @@ namespace WordAnalysis
         public void Form1_Load(object sender, EventArgs e)
         {
             Async(
-                () => Invoke(
-                    () =>
-                        {
-                            Clipboard.SetText(
-                                SetText(
-                                    EnumerableFS(
-                                        @"D:\MyConfiguration\lzy13870\Desktop\sent",
-                                        p => p.EndsWith(".doc") || p.EndsWith(".docx"))
-                                        .Take(2)
-                                        .Select(p => Parse(OpenWordXml(p)))
-                                        .ToList()
-                                        .JoinStrings(Environment.NewLine)));
-                            Application.Exit();
-                        }));
+                () =>
+                    {
+                        SetText(
+                            EnumerableFS(
+                                @"D:\MyConfiguration\lzy13870\Desktop\sent",
+                                p => p.EndsWith(".doc") || p.EndsWith(".docx"))
+                                .Take(2)
+                                .Select(p => string.Join(Environment.NewLine, p, Parse(OpenWordXml(p))))
+                                .ToList()
+                                .JoinStrings(Environment.NewLine));
+                        //Application.Exit();
+                    });
         }
 
         public string SetText(string txt)
         {
-            Invoke(new MethodInvoker(() => this.txtOutput.Text = txt));
+            Invoke(new MethodInvoker(() => Clipboard.SetText(txtOutput.Text = txt)));
             return txt;
         }
 
@@ -259,38 +258,43 @@ namespace WordAnalysis
                         .Take(1)
                         .JoinStrings()
                         .MatchesJoinTrim(numberPattern)
-                        .IsNull(resourceName.MatchesJoinTrim(pricePattern).MatchesJoinTrim(numberPattern));
+                        //.IsNull(resourceName.MatchesJoinTrim(pricePattern).MatchesJoinTrim(numberPattern))
+                        .IsNull("0").ToDecimal();
                 var resourceUnit =
                     row.Get(2)
                         .Matches(unitPattern)
                         .HashSet()
                         .JoinStrings()
-                        .IsNull(resourceName.Matches(unitPattern).HashSet().JoinStrings());
+                        //.IsNull(resourceName.Matches(unitPattern).HashSet().JoinStrings())
+                        .IsNull("0").ToDecimal();
                 var resourceDays =
                     row.Get(2)
                         .Matches(@"\*\d+")
                         .Get(0)
                         .MatchesJoinTrim(@"\d+")
-                        .IsNull(resourceName.Matches(@"\*\d+").Get(0).MatchesJoinTrim(@"\d+"));
+                        //.IsNull(resourceName.Matches(@"\*\d+").Get(0).MatchesJoinTrim(@"\d+"))
+                        .IsNull("0").ToDecimal();
                 var resourceCount =
                     ParseMathForm(
                         row.Get(3)
                             .Matches(numberPattern)
                             .FirstOrDefault()
-                            .IsNull(
-                                resourceName.MatchesJoinTrim(numberPattern)
-                                    .Split("*".ToCharArray(), StringSplitOptions.RemoveEmptyEntries).JoinStrings(" "))
-                            .IsNull("0"));
+                            //.IsNull(
+                            //    resourceName.MatchesJoinTrim(numberPattern)
+                            //        .Split("*".ToCharArray(), StringSplitOptions.RemoveEmptyEntries).JoinStrings(" "))
+                            .IsNull("0")).ToDecimal();
                 var resourceTotal =
                     row.Get(4)
                         .Matches(numberPattern)
                         .IsNull(resourceName.Matches(numberPattern))
-                        .LastOrDefault().IsNull("0");
-                if (resourceTotal.IsEmpty())
+                        .LastOrDefault().IsNull("0").ToDecimal();
+
+                if (resourceCount==0)
                 {
-                    resourceTotal = resourceCount;
-                    resourceCount = string.Empty;
+                    LineForm form = new LineForm();
+                    form.Show();
                 }
+
                 return new[]
                            {
                                new
@@ -302,7 +306,7 @@ namespace WordAnalysis
                                        ResourcesName = resourceName,
                                        ResourcesPrice = resourcePrice,
                                        UnitName = resourceUnit,
-                                       Days = resourceDays.MatchesJoinTrim(@"\d+"),
+                                       Days = resourceDays,
                                        ResourcesCount = resourceCount,
                                        ResourcesTotalPrice = resourceTotal
                                    }
@@ -717,18 +721,18 @@ namespace WordAnalysis
 
         private void textBox1_DoubleClick(object sender, EventArgs e)
         {
-            var result = this.openFileDialogDefault.ShowDialog();
+            var result = openFileDialogDefault.ShowDialog();
             if (result == DialogResult.OK)
             {
-                var fileName = this.openFileDialogDefault.FileName;
+                var fileName = openFileDialogDefault.FileName;
                 var xmlText = OpenWordXml(fileName);
-                this.txtOutput.Text = Str(fileName, Environment.NewLine, Parse(xmlText));
+                txtOutput.Text = Str(fileName, Environment.NewLine, Parse(xmlText));
             }
         }
 
         public void openFileDialog(Action<string> fn)
         {
-            var result = this.openFileDialogDefault.ShowDialog();
+            var result = openFileDialogDefault.ShowDialog();
             if (result == DialogResult.OK)
             {
                 fn(openFileDialogDefault.FileName);
@@ -736,7 +740,7 @@ namespace WordAnalysis
         }
         public void openDirDialog(Action<string> fn)
         {
-            var result = this.folderBrowserDialogDefault.ShowDialog();
+            var result = folderBrowserDialogDefault.ShowDialog();
             if (result == DialogResult.OK)
             {
                 fn(folderBrowserDialogDefault.SelectedPath);
@@ -749,6 +753,9 @@ namespace WordAnalysis
             var document = Open(fileName, app);
             Func<Microsoft.Office.Interop.Word.Document, string> getXml = doc => doc.Content.XML;
             var xmlText = getXml.Try(document);
+            var currentXml = "current.xml";
+            File.WriteAllText(currentXml, xmlText);
+            //Process.Start(currentXml);
             document.Close();
             app.Quit();
             return xmlText;
@@ -761,16 +768,17 @@ namespace WordAnalysis
         private void textBoxFolder_DoubleClick(object sender, EventArgs e)
         {
             openDirDialog(
-                path => ThreadPool.QueueUserWorkItem(
+                folder => ThreadPool.QueueUserWorkItem(
                     o =>
-                    {
-                        SetText(
-                            EnumerableFS(path, p => p.EndsWith(".doc") || p.EndsWith(".docx"))
-                                //.Take(2)
-                                .Select(p => Parse(OpenWordXml(p)))
-                                .ToList()
-                                .JoinStrings(Environment.NewLine));
-                    }));
+                        {
+                            SetText(
+                                EnumerableFS(folder, p => p.EndsWith(".doc") || p.EndsWith(".docx"))
+                                    //.Take(2)
+                                    .Select(
+                                        cpath => string.Join(Environment.NewLine, cpath, Parse(OpenWordXml(folder))))
+                                    .ToList()
+                                    .JoinStrings(Environment.NewLine));
+                        }));
         }
     }
 }

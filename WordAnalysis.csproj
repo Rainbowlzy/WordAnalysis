@@ -91,11 +91,20 @@
     <Compile Include="AsyncConsole.Designer.cs">
       <DependentUpon>AsyncConsole.cs</DependentUpon>
     </Compile>
+    <Compile Include="LineForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="LineForm.Designer.cs">
+      <DependentUpon>LineForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="XmlNodeListExtension.cs" />
     <EmbeddedResource Include="AsyncConsole.resx">
       <DependentUpon>AsyncConsole.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="LineForm.resx">
+      <DependentUpon>LineForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

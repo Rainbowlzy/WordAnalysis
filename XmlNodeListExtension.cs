@@ -44,7 +44,7 @@ namespace WordAnalysis
             }
             return source.ToList();
         }
-        public static HashSet<T> HashSet<T>(this List<T> source) where T : class
+        public static HashSet<T> HashSet<T>(this List<T> source)
         {
             return new HashSet<T>(source);
         }
@@ -61,6 +61,12 @@ namespace WordAnalysis
     }
     public static class StringExtension
     {
+        public static decimal ToDecimal(this string source, decimal @defualt = 0)
+        {
+            decimal val;
+            return decimal.TryParse(source.IsNull(@defualt.ToString()), out val) ? val : @defualt;
+        }
+
         public static string IsNull(this string source, string @default = "")
         {
             return source.IsEmpty() ? @default : source;

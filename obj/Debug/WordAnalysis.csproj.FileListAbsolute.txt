@@ -33,3 +33,4 @@ D:\MyConfiguration\lzy13870\Documents\branchs\WordAnalysis\obj\Debug\WordAnalysi
 D:\MyConfiguration\lzy13870\Documents\branchs\WordAnalysis\obj\Debug\WordAnalysis.csproj.GenerateResource.Cache
 D:\MyConfiguration\lzy13870\Documents\branchs\WordAnalysis\obj\Debug\WordAnalysis.exe
 D:\MyConfiguration\lzy13870\Documents\branchs\WordAnalysis\obj\Debug\WordAnalysis.pdb
+D:\MyConfiguration\lzy13870\Documents\branchs\WordAnalysis\obj\Debug\WordAnalysis.LineForm.resources
